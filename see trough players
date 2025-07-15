@@ -1,46 +1,120 @@
 -- LocalScript in StarterGui > ScreenGui
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- Maak een ScreenGui aan als die er nog niet is
+-- GUI setup
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ESP_GUI"
 screenGui.Parent = playerGui
 
--- Maak een Frame
 local frame = Instance.new("Frame")
 frame.Name = "ESP_Frame"
-frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Size = UDim2.new(0, 200, 0, 160)
 frame.Position = UDim2.new(0, 50, 0, 50)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.Parent = screenGui
 
--- Maak een TextButton
-local button = Instance.new("TextButton")
-button.Name = "ESP_Button"
-button.Size = UDim2.new(0, 180, 0, 50)
-button.Position = UDim2.new(0, 10, 0, 25)
-button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-button.Text = "Zie spelers door muren"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.Parent = frame
+local espButton = Instance.new("TextButton")
+espButton.Name = "ESP_Button"
+espButton.Size = UDim2.new(0, 180, 0, 50)
+espButton.Position = UDim2.new(0, 10, 0, 20)
+espButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+espButton.Text = "ESP: UIT"
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Parent = frame
 
--- Functie om Highlight toe te voegen
-local function highlightPlayers()
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			if not player.Character:FindFirstChild("ESP_Highlight") then
-				local highlight = Instance.new("Highlight")
-				highlight.Name = "ESP_Highlight"
-				highlight.FillColor = Color3.fromRGB(255, 0, 0)
-				highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-				highlight.Parent = player.Character
+local multiJumpButton = Instance.new("TextButton")
+multiJumpButton.Name = "MultiJump_Button"
+multiJumpButton.Size = UDim2.new(0, 180, 0, 50)
+multiJumpButton.Position = UDim2.new(0, 10, 0, 90)
+multiJumpButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+multiJumpButton.Text = "MultiJump: UIT"
+multiJumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+multiJumpButton.Parent = frame
+
+-- ESP toggle
+local espEnabled = false
+
+local function toggleESP()
+	espEnabled = not espEnabled
+
+	if espEnabled then
+		espButton.Text = "ESP: AAN"
+		-- Voeg highlights toe
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				if not player.Character:FindFirstChild("ESP_Highlight") then
+					local highlight = Instance.new("Highlight")
+					highlight.Name = "ESP_Highlight"
+					highlight.FillColor = Color3.fromRGB(255, 0, 0)
+					highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+					highlight.Parent = player.Character
+				end
+			end
+		end
+	else
+		espButton.Text = "ESP: UIT"
+		-- Verwijder highlights
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= localPlayer and player.Character then
+				local highlight = player.Character:FindFirstChild("ESP_Highlight")
+				if highlight then
+					highlight:Destroy()
+				end
 			end
 		end
 	end
 end
 
--- Koppel de knop
-button.MouseButton1Click:Connect(highlightPlayers)
+espButton.MouseButton1Click:Connect(toggleESP)
+
+-- MultiJump toggle
+local multiJumpEnabled = false
+local MAX_JUMPS = 2
+local jumpsLeft = 0
+
+multiJumpButton.MouseButton1Click:Connect(function()
+	multiJumpEnabled = not multiJumpEnabled
+	if multiJumpEnabled then
+		multiJumpButton.Text = "MultiJump: AAN"
+	else
+		multiJumpButton.Text = "MultiJump: UIT"
+	end
+end)
+
+local function setupMultiJump(character)
+	local humanoid = character:WaitForChild("Humanoid")
+
+	-- Reset jumps als je landt
+	humanoid.StateChanged:Connect(function(_, state)
+		if state == Enum.HumanoidStateType.Landed then
+			jumpsLeft = MAX_JUMPS
+		end
+	end)
+end
+
+-- Reageer op jump input
+UserInputService.JumpRequest:Connect(function()
+	local character = localPlayer.Character
+	if not character then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if not multiJumpEnabled then return end
+
+	if humanoid:GetState() == Enum.HumanoidStateType.Freefall and jumpsLeft > 0 then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		jumpsLeft -= 1
+	end
+end)
+
+-- Setup als je respawnt
+localPlayer.CharacterAdded:Connect(setupMultiJump)
+
+-- Als je al leeft bij starten:
+if localPlayer.Character then
+	setupMultiJump(localPlayer.Character)
+end
