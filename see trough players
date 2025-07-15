@@ -1,17 +1,40 @@
--- Plaats dit in een LocalScript onder je TextButton
-local button = script.Parent  -- dit verwijst naar de TextButton
+-- LocalScript in StarterGui > ScreenGui
 
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
 
+-- Maak een ScreenGui aan als die er nog niet is
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ESP_GUI"
+screenGui.Parent = playerGui
+
+-- Maak een Frame
+local frame = Instance.new("Frame")
+frame.Name = "ESP_Frame"
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0, 50, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Parent = screenGui
+
+-- Maak een TextButton
+local button = Instance.new("TextButton")
+button.Name = "ESP_Button"
+button.Size = UDim2.new(0, 180, 0, 50)
+button.Position = UDim2.new(0, 10, 0, 25)
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+button.Text = "Zie spelers door muren"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = frame
+
+-- Functie om Highlight toe te voegen
 local function highlightPlayers()
 	for _, player in pairs(Players:GetPlayers()) do
 		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			-- Controleer of er al een highlight is
 			if not player.Character:FindFirstChild("ESP_Highlight") then
 				local highlight = Instance.new("Highlight")
 				highlight.Name = "ESP_Highlight"
-				highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Rood
+				highlight.FillColor = Color3.fromRGB(255, 0, 0)
 				highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
 				highlight.Parent = player.Character
 			end
@@ -19,6 +42,5 @@ local function highlightPlayers()
 	end
 end
 
-button.MouseButton1Click:Connect(function()
-	highlightPlayers()
-end)
+-- Koppel de knop
+button.MouseButton1Click:Connect(highlightPlayers)
