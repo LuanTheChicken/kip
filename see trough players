@@ -1,0 +1,24 @@
+-- Plaats dit in een LocalScript onder je TextButton
+local button = script.Parent  -- dit verwijst naar de TextButton
+
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+local function highlightPlayers()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			-- Controleer of er al een highlight is
+			if not player.Character:FindFirstChild("ESP_Highlight") then
+				local highlight = Instance.new("Highlight")
+				highlight.Name = "ESP_Highlight"
+				highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Rood
+				highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+				highlight.Parent = player.Character
+			end
+		end
+	end
+end
+
+button.MouseButton1Click:Connect(function()
+	highlightPlayers()
+end)
