@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
@@ -12,30 +13,69 @@ screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Name = "ESP_Frame"
-frame.Size = UDim2.new(0, 200, 0, 160)
+frame.Size = UDim2.new(0, 220, 0, 360)
 frame.Position = UDim2.new(0, 50, 0, 50)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Active = true
+frame.Draggable = true -- drag & drop
 frame.Parent = screenGui
 
+-- Always visible X Toggle Button
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 40, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 0, 10) -- Zet hem vast in de hoek
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Text = "X"
+toggleButton.Parent = screenGui
+
+-- ESP Button
 local espButton = Instance.new("TextButton")
-espButton.Name = "ESP_Button"
-espButton.Size = UDim2.new(0, 180, 0, 50)
-espButton.Position = UDim2.new(0, 10, 0, 20)
+espButton.Size = UDim2.new(0, 200, 0, 40)
+espButton.Position = UDim2.new(0, 10, 0, 50)
 espButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-espButton.Text = "ESP: UIT"
 espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Text = "ESP: UIT"
 espButton.Parent = frame
 
+-- MultiJump Button
 local multiJumpButton = Instance.new("TextButton")
-multiJumpButton.Name = "MultiJump_Button"
-multiJumpButton.Size = UDim2.new(0, 180, 0, 50)
-multiJumpButton.Position = UDim2.new(0, 10, 0, 90)
+multiJumpButton.Size = UDim2.new(0, 200, 0, 40)
+multiJumpButton.Position = UDim2.new(0, 10, 0, 100)
 multiJumpButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-multiJumpButton.Text = "MultiJump: UIT"
 multiJumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+multiJumpButton.Text = "MultiJump: UIT"
 multiJumpButton.Parent = frame
 
--- ESP toggle
+-- Speed Button
+local speedButton = Instance.new("TextButton")
+speedButton.Size = UDim2.new(0, 200, 0, 40)
+speedButton.Position = UDim2.new(0, 10, 0, 150)
+speedButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+speedButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+speedButton.Text = "+10 Speed"
+speedButton.Parent = frame
+
+-- Reset Speed Button
+local resetSpeedButton = Instance.new("TextButton")
+resetSpeedButton.Size = UDim2.new(0, 200, 0, 40)
+resetSpeedButton.Position = UDim2.new(0, 10, 0, 200)
+resetSpeedButton.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+resetSpeedButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+resetSpeedButton.Text = "Reset Speed"
+resetSpeedButton.Parent = frame
+
+-- NoClip Button
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(0, 200, 0, 40)
+noclipButton.Position = UDim2.new(0, 10, 0, 250)
+noclipButton.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
+noclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+noclipButton.Text = "NoClip: UIT"
+noclipButton.Parent = frame
+
+---------------------------
+-- ESP logic
 local espEnabled = false
 
 local function toggleESP()
@@ -43,7 +83,6 @@ local function toggleESP()
 
 	if espEnabled then
 		espButton.Text = "ESP: AAN"
-		-- Voeg highlights toe
 		for _, player in pairs(Players:GetPlayers()) do
 			if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 				if not player.Character:FindFirstChild("ESP_Highlight") then
@@ -57,7 +96,6 @@ local function toggleESP()
 		end
 	else
 		espButton.Text = "ESP: UIT"
-		-- Verwijder highlights
 		for _, player in pairs(Players:GetPlayers()) do
 			if player ~= localPlayer and player.Character then
 				local highlight = player.Character:FindFirstChild("ESP_Highlight")
@@ -71,9 +109,10 @@ end
 
 espButton.MouseButton1Click:Connect(toggleESP)
 
--- MultiJump toggle
+---------------------------
+-- MultiJump logic
 local multiJumpEnabled = false
-local MAX_JUMPS = 100
+local MAX_JUMPS = 2
 local jumpsLeft = 0
 
 multiJumpButton.MouseButton1Click:Connect(function()
@@ -88,7 +127,6 @@ end)
 local function setupMultiJump(character)
 	local humanoid = character:WaitForChild("Humanoid")
 
-	-- Reset jumps als je landt
 	humanoid.StateChanged:Connect(function(_, state)
 		if state == Enum.HumanoidStateType.Landed then
 			jumpsLeft = MAX_JUMPS
@@ -96,7 +134,6 @@ local function setupMultiJump(character)
 	end)
 end
 
--- Reageer op jump input
 UserInputService.JumpRequest:Connect(function()
 	local character = localPlayer.Character
 	if not character then return end
@@ -111,10 +148,61 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- Setup als je respawnt
 localPlayer.CharacterAdded:Connect(setupMultiJump)
-
--- Als je al leeft bij starten:
 if localPlayer.Character then
 	setupMultiJump(localPlayer.Character)
 end
+
+---------------------------
+-- Speed logic
+local function addSpeed()
+	local character = localPlayer.Character
+	if not character then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	humanoid.WalkSpeed = humanoid.WalkSpeed + 10
+end
+
+local function resetSpeed()
+	local character = localPlayer.Character
+	if not character then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	humanoid.WalkSpeed = 16 -- standaard WalkSpeed
+end
+
+speedButton.MouseButton1Click:Connect(addSpeed)
+resetSpeedButton.MouseButton1Click:Connect(resetSpeed)
+
+---------------------------
+-- NoClip logic
+local noclipEnabled = false
+
+noclipButton.MouseButton1Click:Connect(function()
+	noclipEnabled = not noclipEnabled
+	if noclipEnabled then
+		noclipButton.Text = "NoClip: AAN"
+	else
+		noclipButton.Text = "NoClip: UIT"
+	end
+end)
+
+RunService.Stepped:Connect(function()
+	if noclipEnabled and localPlayer.Character then
+		for _, part in pairs(localPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+---------------------------
+-- Toggle Button logic
+local visible = true
+toggleButton.MouseButton1Click:Connect(function()
+	visible = not visible
+	frame.Visible = visible
+end)
