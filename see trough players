@@ -112,7 +112,7 @@ espButton.MouseButton1Click:Connect(toggleESP)
 ---------------------------
 -- MultiJump logic
 local multiJumpEnabled = false
-local MAX_JUMPS = 2
+local MAX_JUMPS = 1000
 local jumpsLeft = 0
 
 multiJumpButton.MouseButton1Click:Connect(function()
